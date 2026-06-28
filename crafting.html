@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AlbionEdge — Crafting Profit Calculator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f13; color: #e8e6e0; min-height: 100vh; }
+
+  .header { background: #16161f; border-bottom: 1px solid #2a2a3a; padding: 14px 24px; display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 30px; height: 30px; }
+  .logo-text { font-size: 16px; font-weight: 600; color: #c9a84c; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 12px; color: #666; margin-left: 2px; }
+
+  .nav { background: #16161f; border-bottom: 1px solid #2a2a3a; display: flex; overflow-x: auto; padding: 0 16px; gap: 2px; }
+  .nav-tab { padding: 11px 16px; font-size: 13px; color: #888; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 6px; text-decoration: none; transition: color 0.15s; }
+  .nav-tab:hover { color: #ccc; }
+  .nav-tab.active { color: #c9a84c; border-bottom-color: #c9a84c; }
+  .nav-tab.coming-soon { color: #444; cursor: default; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+  .page-title { font-size: 22px; font-weight: 600; color: #e8e6e0; margin-bottom: 4px; }
+  .page-sub { font-size: 14px; color: #666; margin-bottom: 24px; }
+
+  .controls { background: #16161f; border: 1px solid #2a2a3a; border-radius: 10px; padding: 18px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  .control-group { display: flex; flex-direction: column; gap: 6px; }
+  .control-group label { font-size: 12px; color: #888; font-weight: 500; }
+  .control-group select, .control-group input { background: #0f0f13; border: 1px solid #2a2a3a; border-radius: 6px; color: #e8e6e0; font-size: 13px; padding: 8px 10px; min-width: 140px; }
+  .control-group select:focus, .control-group input:focus { outline: none; border-color: #c9a84c; }
+
+  .btn { padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: background 0.15s; }
+  .btn-gold { background: #c9a84c; color: #0f0f13; }
+  .btn-gold:hover { background: #d9b85c; }
+  .btn-gold:disabled { background: #5a4a1a; color: #888; cursor: not-allowed; }
+
+  .status { font-size: 13px; color: #888; padding: 4px 0; align-self: center; }
+  .status.loading { color: #c9a84c; }
+  .status.error { color: #e05a5a; }
+
+  .info-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .info-card { background: #16161f; border: 1px solid #2a2a3a; border-radius: 10px; padding: 14px 18px; flex: 1; min-width: 160px; }
+  .info-label { font-size: 11px; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .info-val { font-size: 20px; font-weight: 600; color: #e8e6e0; }
+  .info-val.green { color: #4caf84; }
+  .info-val.amber { color: #c9a84c; }
+
+  .results { background: #16161f; border: 1px solid #2a2a3a; border-radius: 10px; overflow: hidden; }
+  .results-header { padding: 14px 18px; border-bottom: 1px solid #2a2a3a; font-size: 13px; color: #888; display: flex; justify-content: space-between; align-items: center; }
+  .results-count { font-weight: 500; color: #e8e6e0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; font-weight: 500; color: #555; padding: 10px 16px; border-bottom: 1px solid #1e1e2a; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 11px 16px; border-bottom: 1px solid #1a1a24; color: #ccc; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1a1a24; }
+
+  .profit { color: #4caf84; font-weight: 600; }
+  .loss { color: #e05a5a; font-weight: 600; }
+  .item-name { color: #e8e6e0; font-weight: 500; }
+
+  .badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+  .badge-green { background: #1a3a2a; color: #4caf84; }
+  .badge-amber { background: #3a2a0a; color: #c9a84c; }
+  .badge-red { background: #3a1a1a; color: #e05a5a; }
+
+  .mat-list { font-size: 12px; color: #666; line-height: 1.8; }
+  .mat-list span { color: #888; }
+
+  .empty { padding: 48px 20px; text-align: center; color: #555; }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; }
+
+  .note { font-size: 12px; color: #555; margin-top: 12px; line-height: 1.6; }
+  .note a { color: #c9a84c; text-decoration: none; }
+
+  .focus-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #888; cursor: pointer; padding: 8px 0; align-self: center; }
+  .focus-toggle input { width: 16px; height: 16px; accent-color: #c9a84c; cursor: pointer; }
+  .focus-toggle:hover { color: #ccc; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg class="logo-icon" viewBox="0 0 30 30" fill="none">
+    <polygon points="15,2 28,9 28,21 15,28 2,21 2,9" stroke="#c9a84c" stroke-width="1.5" fill="none"/>
+    <polygon points="15,7 23,12 23,18 15,23 7,18 7,12" fill="#c9a84c" opacity="0.25"/>
+    <polygon points="15,11 19,13.5 19,16.5 15,19 11,16.5 11,13.5" fill="#c9a84c" opacity="0.7"/>
+  </svg>
+  <span class="logo-text">AlbionEdge</span>
+  <span class="logo-sub">toolkit</span>
+</div>
+
+<nav class="nav">
+  <a class="nav-tab" href="index.html">⚖️ Arbitrage</a>
+  <a class="nav-tab active" href="#">🔨 Crafting</a>
+  <a class="nav-tab coming-soon" href="#">🛡️ Build cost</a>
+  <a class="nav-tab coming-soon" href="#">📈 Flip tracker</a>
+  <a class="nav-tab coming-soon" href="#">⚔️ Fame logger</a>
+  <a class="nav-tab coming-soon" href="#">🌿 Farm optimizer</a>
+  <a class="nav-tab coming-soon" href="#">📖 Builds</a>
+</nav>
+
+<div class="main">
+  <div class="page-title">Crafting profit calculator</div>
+  <div class="page-sub">See which items are worth crafting right now based on live material costs vs sell prices.</div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>Category</label>
+      <select id="category">
+        <option value="armor">Armor</option>
+        <option value="weapons">Weapons</option>
+        <option value="bags">Bags</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Tier</label>
+      <select id="tier">
+        <option value="4">T4</option>
+        <option value="5">T5</option>
+        <option value="6" selected>T6</option>
+        <option value="7">T7</option>
+        <option value="8">T8</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Craft city</label>
+      <select id="city">
+        <option>Caerleon</option>
+        <option>Bridgewatch</option>
+        <option>Lymhurst</option>
+        <option>Fort Sterling</option>
+        <option>Martlock</option>
+        <option>Thetford</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Return rate</label>
+      <select id="returnRate">
+        <option value="0">0% (no focus)</option>
+        <option value="15" selected>15% (focus)</option>
+        <option value="24">24% (max focus)</option>
+        <option value="43">43% (max + spec)</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Tax rate</label>
+      <select id="tax">
+        <option value="3">3% (premium)</option>
+        <option value="4.5" selected>4.5% (standard)</option>
+        <option value="8">8% (non-premium)</option>
+      </select>
+    </div>
+    <button class="btn btn-gold" id="calcBtn" onclick="calculate()">Calculate</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <div class="info-row" id="summaryRow" style="display:none">
+    <div class="info-card">
+      <div class="info-label">Best item to craft</div>
+      <div class="info-val amber" id="bestItem">—</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Best profit</div>
+      <div class="info-val green" id="bestProfit">—</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Items worth crafting</div>
+      <div class="info-val" id="worthCount">—</div>
+    </div>
+    <div class="info-card">
+      <div class="info-label">Items to avoid</div>
+      <div class="info-val" id="avoidCount">—</div>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="results-header">
+      <span class="results-count" id="resultsCount">—</span>
+      <span style="font-size:12px;color:#555">Sorted by profit</span>
+    </div>
+    <div id="resultsBody">
+      <div class="empty">
+        <div class="empty-icon">🔨</div>
+        <div class="empty-text">Set your filters and click "Calculate" to see crafting profits.</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    Material costs and sell prices from the <a href="https://www.albion-online-data.com/" target="_blank">Albion Online Data Project</a>.
+    Return rate reduces material cost — e.g. 15% return rate means you effectively only use 85% of materials.
+    Always double-check prices in-game before crafting large batches.
+  </p>
+</div>
+
+<script>
+const API = 'https://west.albion-online-data.com/api/v2/stats/prices/';
+const LOCATIONS = ['Caerleon','Bridgewatch','Lymhurst','Fort Sterling','Martlock','Thetford'];
+
+// Each item: [itemSuffix, friendlyName, [material1, qty1, material2, qty2, ...]]
+const CRAFTABLE = {
+  armor: [
+    ['ARMOR_PLATE_SET1', 'Plate Armor',   ['METALBAR', 16, 'LEATHER', 8]],
+    ['ARMOR_LEATHER_SET1', 'Leather Jacket', ['LEATHER', 16, 'CLOTH', 8]],
+    ['ARMOR_CLOTH_SET1', 'Cloth Robe',    ['CLOTH', 16, 'LEATHER', 4]],
+    ['HEAD_PLATE_SET1', 'Plate Helmet',   ['METALBAR', 8, 'LEATHER', 4]],
+    ['HEAD_LEATHER_SET1', 'Leather Hood', ['LEATHER', 8, 'CLOTH', 4]],
+    ['HEAD_CLOTH_SET1', 'Scholar Cowl',   ['CLOTH', 8, 'LEATHER', 2]],
+    ['SHOES_PLATE_SET1', 'Plate Boots',   ['METALBAR', 8, 'LEATHER', 4]],
+    ['SHOES_LEATHER_SET1', 'Leather Shoes',['LEATHER', 8, 'CLOTH', 4]],
+    ['SHOES_CLOTH_SET1', 'Cloth Sandals', ['CLOTH', 8, 'LEATHER', 2]],
+  ],
+  weapons: [
+    ['MAIN_SWORD', 'Sword',           ['METALBAR', 12, 'PLANKS', 4]],
+    ['2H_SWORD', 'Claymore',          ['METALBAR', 20, 'PLANKS', 4]],
+    ['MAIN_DAGGER', 'Dagger',         ['METALBAR', 12, 'LEATHER', 4]],
+    ['2H_CROSSBOW', 'Crossbow',       ['PLANKS', 12, 'METALBAR', 8]],
+    ['MAIN_SPEAR', 'Spear',           ['METALBAR', 12, 'PLANKS', 8]],
+    ['STAFF_FIRE', 'Fire Staff',      ['PLANKS', 16, 'CLOTH', 4]],
+    ['STAFF_HOLY', 'Holy Staff',      ['PLANKS', 16, 'CLOTH', 4]],
+    ['MAIN_ARCANESTAFF', 'Arcane Staff',['PLANKS', 16, 'CLOTH', 4]],
+    ['2H_NATURESTAFF', 'Nature Staff', ['PLANKS', 20, 'CLOTH', 4]],
+  ],
+  bags: [
+    ['BAG', 'Bag',              ['LEATHER', 8, 'CLOTH', 4]],
+    ['BAG_INSIGHT', 'Insight Bag', ['LEATHER', 12, 'CLOTH', 8]],
+  ]
+};
+
+// Material item IDs per tier
+const MATERIALS = {
+  METALBAR: { 4:'T4_METALBAR', 5:'T5_METALBAR', 6:'T6_METALBAR', 7:'T7_METALBAR', 8:'T8_METALBAR' },
+  LEATHER:  { 4:'T4_LEATHER',  5:'T5_LEATHER',  6:'T6_LEATHER',  7:'T7_LEATHER',  8:'T8_LEATHER' },
+  CLOTH:    { 4:'T4_CLOTH',    5:'T5_CLOTH',    6:'T6_CLOTH',    7:'T7_CLOTH',    8:'T8_CLOTH' },
+  PLANKS:   { 4:'T4_PLANKS',   5:'T5_PLANKS',   6:'T6_PLANKS',   7:'T7_PLANKS',   8:'T8_PLANKS' },
+};
+
+async function fetchPrices(itemIds, locations) {
+  const url = `${API}${itemIds.join(',')}?locations=${locations.join(',')}&qualities=1`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('API error');
+  return await res.json();
+}
+
+function bestPrice(data, itemId, city, type) {
+  // type: 'buy' = lowest sell_price_min (what we pay), 'sell' = highest sell_price_min (what we get)
+  const rows = data.filter(r => r.item_id === itemId && r.city === city && r.sell_price_min > 0);
+  if (!rows.length) return 0;
+  return Math.min(...rows.map(r => r.sell_price_min));
+}
+
+function bestSellAcrossCities(data, itemId, cities) {
+  let best = 0;
+  let bestCity = '';
+  for (const city of cities) {
+    const rows = data.filter(r => r.item_id === itemId && r.city === city && r.sell_price_min > 0);
+    if (!rows.length) continue;
+    const price = Math.min(...rows.map(r => r.sell_price_min));
+    if (price > best) { best = price; bestCity = city; }
+  }
+  return { price: best, city: bestCity };
+}
+
+async function calculate() {
+  const category = document.getElementById('category').value;
+  const tier = parseInt(document.getElementById('tier').value);
+  const city = document.getElementById('city').value;
+  const returnRate = parseInt(document.getElementById('returnRate').value) / 100;
+  const tax = parseFloat(document.getElementById('tax').value) / 100;
+
+  const btn = document.getElementById('calcBtn');
+  const status = document.getElementById('status');
+  const body = document.getElementById('resultsBody');
+  const count = document.getElementById('resultsCount');
+  const summaryRow = document.getElementById('summaryRow');
+
+  btn.disabled = true;
+  status.className = 'status loading';
+  status.textContent = 'Fetching live prices…';
+  body.innerHTML = '<div class="empty"><div class="empty-text" style="color:#c9a84c">Loading prices…</div></div>';
+  summaryRow.style.display = 'none';
+
+  const items = CRAFTABLE[category] || [];
+  const outputIds = items.map(([suffix]) => `T${tier}_${suffix}`);
+
+  // Collect all material IDs needed
+  const matIdSet = new Set();
+  for (const [, , mats] of items) {
+    for (let i = 0; i < mats.length; i += 2) {
+      const matKey = mats[i];
+      if (MATERIALS[matKey] && MATERIALS[matKey][tier]) {
+        matIdSet.add(MATERIALS[matKey][tier]);
+      }
+    }
+  }
+  const matIds = [...matIdSet];
+
+  let data;
+  try {
+    const allIds = [...outputIds, ...matIds];
+    data = await fetchPrices(allIds, LOCATIONS);
+  } catch(e) {
+    status.className = 'status error';
+    status.textContent = 'Could not fetch prices. Try again.';
+    btn.disabled = false;
+    body.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">Failed to load prices. Check connection and try again.</div></div>';
+    return;
+  }
+
+  const results = [];
+
+  for (const [suffix, name, mats] of items) {
+    const outputId = `T${tier}_${suffix}`;
+
+    // Calculate material cost (in chosen city, adjusted for return rate)
+    let matCostTotal = 0;
+    const matBreakdown = [];
+    let missingMats = false;
+
+    for (let i = 0; i < mats.length; i += 2) {
+      const matKey = mats[i];
+      const qty = mats[i + 1];
+      const matId = MATERIALS[matKey] && MATERIALS[matKey][tier];
+      if (!matId) { missingMats = true; break; }
+      const price = bestPrice(data, matId, city, 'buy');
+      if (!price) { missingMats = true; break; }
+      const effectiveQty = qty * (1 - returnRate);
+      const cost = price * effectiveQty;
+      matCostTotal += cost;
+      matBreakdown.push(`${matKey.charAt(0)+matKey.slice(1).toLowerCase()} ×${effectiveQty.toFixed(1)} @ ${price.toLocaleString()}`);
+    }
+
+    if (missingMats) continue;
+
+    // Best sell price across all cities
+    const { price: sellPrice, city: sellCity } = bestSellAcrossCities(data, outputId, LOCATIONS);
+    if (!sellPrice) continue;
+
+    const sellAfterTax = sellPrice * (1 - tax);
+    const profit = Math.round(sellAfterTax - matCostTotal);
+    const roi = matCostTotal > 0 ? (profit / matCostTotal) * 100 : 0;
+
+    results.push({ name, outputId, matCostTotal: Math.round(matCostTotal), sellPrice, sellAfterTax: Math.round(sellAfterTax), sellCity, profit, roi, matBreakdown });
+  }
+
+  results.sort((a, b) => b.profit - a.profit);
+
+  btn.disabled = false;
+  status.className = 'status';
+  status.textContent = '';
+
+  if (!results.length) {
+    count.textContent = 'No data found';
+    body.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">No price data available for this tier/category. The Albion Data Project may not have recent data for these items.</div></div>';
+    return;
+  }
+
+  const worthCrafting = results.filter(r => r.profit > 0);
+  const avoid = results.filter(r => r.profit <= 0);
+
+  summaryRow.style.display = 'flex';
+  document.getElementById('bestItem').textContent = results[0].name;
+  document.getElementById('bestProfit').textContent = '+' + results[0].profit.toLocaleString();
+  document.getElementById('worthCount').textContent = worthCrafting.length;
+  document.getElementById('avoidCount').textContent = avoid.length;
+  count.textContent = results.length + ' items calculated';
+
+  function verdict(profit, roi) {
+    if (profit > 0 && roi >= 20) return '<span class="badge badge-green">Craft it</span>';
+    if (profit > 0) return '<span class="badge badge-amber">Marginal</span>';
+    return '<span class="badge badge-red">Skip</span>';
+  }
+
+  const rows = results.map(r => `
+    <tr>
+      <td class="item-name">T${tier} ${r.name}</td>
+      <td>${r.matCostTotal.toLocaleString()}</td>
+      <td>${r.sellAfterTax.toLocaleString()} <span style="font-size:11px;color:#555">(${r.sellCity})</span></td>
+      <td class="${r.profit >= 0 ? 'profit' : 'loss'}">${r.profit >= 0 ? '+' : ''}${r.profit.toLocaleString()}</td>
+      <td>${r.roi.toFixed(1)}%</td>
+      <td>${verdict(r.profit, r.roi)}</td>
+    </tr>
+  `).join('');
+
+  body.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th><th>Material cost</th><th>Sell price (after tax)</th><th>Profit</th><th>ROI</th><th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+</script>
+</body>
+</html>
