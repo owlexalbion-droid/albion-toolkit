@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AlbionEdge — Build Guides</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f13; color: #e8e6e0; min-height: 100vh; }
+
+  .header { background: #16161f; border-bottom: 1px solid #2a2a3a; padding: 14px 24px; display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 30px; height: 30px; }
+  .logo-text { font-size: 16px; font-weight: 600; color: #c9a84c; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 12px; color: #666; margin-left: 2px; }
+
+  .nav { background: #16161f; border-bottom: 1px solid #2a2a3a; display: flex; overflow-x: auto; padding: 0 16px; gap: 2px; }
+  .nav-tab { padding: 11px 16px; font-size: 13px; color: #888; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 6px; text-decoration: none; transition: color 0.15s; }
+  .nav-tab:hover { color: #ccc; }
+  .nav-tab.active { color: #c9a84c; border-bottom-color: #c9a84c; }
+  .nav-tab.coming-soon { color: #444; cursor: default; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+  .page-title { font-size: 22px; font-weight: 600; color: #e8e6e0; margin-bottom: 4px; }
+  .page-sub { font-size: 14px; color: #666; margin-bottom: 24px; }
+
+  .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+  .filter-btn { padding: 7px 16px; border-radius: 20px; font-size: 13px; cursor: pointer; border: 1px solid #2a2a3a; background: transparent; color: #888; transition: all 0.15s; }
+  .filter-btn:hover { border-color: #c9a84c; color: #c9a84c; }
+  .filter-btn.active { background: #c9a84c; color: #0f0f13; border-color: #c9a84c; font-weight: 500; }
+
+  .builds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+
+  .build-card { background: #16161f; border: 1px solid #2a2a3a; border-radius: 12px; overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
+  .build-card:hover { border-color: #3a3a4a; }
+  .build-card.open { border-color: #c9a84c; }
+
+  .build-card-header { padding: 16px 18px; display: flex; align-items: flex-start; gap: 14px; }
+  .build-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+  .build-meta { flex: 1; }
+  .build-category { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .build-name { font-size: 15px; font-weight: 600; color: #e8e6e0; margin-bottom: 8px; }
+  .build-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #1e1e2a; color: #888; border: 1px solid #2a2a3a; }
+  .tag.highlight { background: #2a2010; color: #c9a84c; border-color: #3a3010; }
+  .build-arrow { color: #444; font-size: 16px; transition: transform 0.2s; flex-shrink: 0; margin-top: 2px; }
+  .build-card.open .build-arrow { transform: rotate(180deg); color: #c9a84c; }
+
+  .build-detail { display: none; border-top: 1px solid #2a2a3a; padding: 18px; }
+  .build-card.open .build-detail { display: block; }
+
+  .detail-section { margin-bottom: 18px; }
+  .detail-section:last-child { margin-bottom: 0; }
+  .detail-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; font-weight: 500; }
+
+  .gear-grid { display: flex; flex-direction: column; gap: 6px; }
+  .gear-row { display: flex; align-items: center; gap: 10px; background: #0f0f13; border-radius: 6px; padding: 8px 12px; }
+  .gear-slot-label { font-size: 11px; color: #555; min-width: 72px; }
+  .gear-item-name { font-size: 13px; color: #e8e6e0; font-weight: 500; flex: 1; }
+  .gear-note { font-size: 11px; color: #666; }
+
+  .tips-list { display: flex; flex-direction: column; gap: 8px; }
+  .tip { display: flex; gap: 10px; font-size: 13px; color: #aaa; line-height: 1.5; }
+  .tip-arrow { color: #c9a84c; flex-shrink: 0; font-weight: 600; }
+
+  .diff-bar { display: flex; gap: 6px; margin-top: 8px; }
+  .diff-item { flex: 1; text-align: center; }
+  .diff-label { font-size: 10px; color: #555; margin-bottom: 4px; }
+  .diff-track { height: 4px; background: #1e1e2a; border-radius: 2px; overflow: hidden; }
+  .diff-fill { height: 100%; border-radius: 2px; background: #c9a84c; }
+
+  .cost-estimate { display: flex; justify-content: space-between; align-items: center; background: #0f0f13; border-radius: 6px; padding: 10px 14px; margin-top: 8px; }
+  .cost-label { font-size: 12px; color: #666; }
+  .cost-val { font-size: 14px; font-weight: 600; color: #c9a84c; }
+
+  .empty { padding: 48px 20px; text-align: center; color: #555; }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg class="logo-icon" viewBox="0 0 30 30" fill="none">
+    <polygon points="15,2 28,9 28,21 15,28 2,21 2,9" stroke="#c9a84c" stroke-width="1.5" fill="none"/>
+    <polygon points="15,7 23,12 23,18 15,23 7,18 7,12" fill="#c9a84c" opacity="0.25"/>
+    <polygon points="15,11 19,13.5 19,16.5 15,19 11,16.5 11,13.5" fill="#c9a84c" opacity="0.7"/>
+  </svg>
+  <span class="logo-text">AlbionEdge</span>
+  <span class="logo-sub">toolkit</span>
+</div>
+
+<nav class="nav">
+  <a class="nav-tab" href="index.html">⚖️ Arbitrage</a>
+  <a class="nav-tab" href="crafting.html">🔨 Crafting</a>
+  <a class="nav-tab coming-soon" href="#">🛡️ Build cost</a>
+  <a class="nav-tab coming-soon" href="#">📈 Flip tracker</a>
+  <a class="nav-tab coming-soon" href="#">⚔️ Fame logger</a>
+  <a class="nav-tab coming-soon" href="#">🌿 Farm optimizer</a>
+  <a class="nav-tab active" href="#">📖 Builds</a>
+</nav>
+
+<div class="main">
+  <div class="page-title">Build guides</div>
+  <div class="page-sub">Curated meta builds for every playstyle. Click any build to see the full gear list and tips.</div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filter('all', this)">All builds</button>
+    <button class="filter-btn" onclick="filter('solo', this)">Solo</button>
+    <button class="filter-btn" onclick="filter('group', this)">Group</button>
+    <button class="filter-btn" onclick="filter('pvp', this)">PvP</button>
+    <button class="filter-btn" onclick="filter('pve', this)">PvE</button>
+    <button class="filter-btn" onclick="filter('cheap', this)">Budget</button>
+  </div>
+
+  <div class="builds-grid" id="buildsGrid"></div>
+</div>
+
+<script>
+const BUILDS = [
+  {
+    id: 'bow-cd',
+    icon: '🏹',
+    category: 'Corrupted dungeons',
+    name: 'Bow — solo CD',
+    tags: ['Solo', 'Ranged', 'Mobile', 'Meta'],
+    filters: ['solo', 'pvp'],
+    difficulty: 3,
+    cost: '~600k–1.2M silver',
+    gear: [
+      { slot: 'Main hand', item: 'Warbow', note: 'T6–T8 recommended' },
+      { slot: 'Head', item: 'Stalker Hood', note: 'Bonus dmg after Stealth' },
+      { slot: 'Chest', item: 'Stalker Jacket', note: '' },
+      { slot: 'Feet', item: 'Stalker Shoes', note: '' },
+      { slot: 'Cape', item: 'Lymhurst Cape', note: 'Or Thetford Cape' },
+      { slot: 'Food', item: 'Beef Stew', note: 'Increases max health' },
+      { slot: 'Potion', item: 'Major Resistance', note: '' },
+    ],
+    tips: [
+      'Use Multishot to clear mobs fast — save Snipe for the invader.',
+      'Stay at max range constantly. Kite backwards as you shoot.',
+      'Use Stealth on cooldown before engaging — the Stalker bonus is your main damage spike.',
+      'If the invader is a melee build, keep circling obstacles to break their gap closers.',
+      'Run if you drop below 30% HP. Dying loses more than winning earns at low HP.',
+      'Tier up your bow before your armour — weapon tier matters most for damage.',
+    ]
+  },
+  {
+    id: 'bow-pve',
+    icon: '🏹',
+    category: 'PvE / Dungeons',
+    name: 'Bow — solo PvE farming',
+    tags: ['Solo', 'PvE', 'Budget', 'Beginner'],
+    filters: ['solo', 'pve', 'cheap'],
+    difficulty: 1,
+    cost: '~150k–400k silver',
+    gear: [
+      { slot: 'Main hand', item: 'Warbow', note: 'T4–T6 is fine for PvE' },
+      { slot: 'Head', item: 'Hunter Hood', note: '' },
+      { slot: 'Chest', item: 'Hunter Jacket', note: 'Increases move speed' },
+      { slot: 'Feet', item: 'Hunter Shoes', note: '' },
+      { slot: 'Cape', item: 'Any city cape', note: '' },
+      { slot: 'Food', item: 'Pork Omelette', note: 'Cheap and effective' },
+      { slot: 'Potion', item: 'Minor Healing', note: '' },
+    ],
+    tips: [
+      'Great starter build — cheap, safe, and easy to learn.',
+      'Multishot clears packs of mobs very efficiently.',
+      'Hunter Jacket lets you sprint away from danger — use it to escape red/black zone gankers.',
+      'Focus on T4–T5 blue zone dungeons while learning the game.',
+      'Upgrade to Stalker set when you move into yellow or red zones.',
+    ]
+  },
+  {
+    id: 'hallowfall',
+    icon: '✨',
+    category: '5v5 HG / Corrupted',
+    name: 'Hallowfall healer',
+    tags: ['Support', '5v5', 'Meta', 'Group'],
+    filters: ['group', 'pvp'],
+    difficulty: 4,
+    cost: '~2M–5M silver',
+    gear: [
+      { slot: 'Main hand', item: 'Hallowfall', note: 'T7–T8 strongly recommended' },
+      { slot: 'Head', item: 'Scholar Cowl', note: 'Or Guardian Helmet' },
+      { slot: 'Chest', item: 'Cleric Robe', note: 'Core for healing output' },
+      { slot: 'Feet', item: 'Cloth Sandals', note: 'Or Assassin Shoes for mobility' },
+      { slot: 'Cape', item: 'Thetford Cape', note: '' },
+      { slot: 'Food', item: 'Roast Pork', note: 'Increases healing received' },
+      { slot: 'Potion', item: 'Gigantify', note: 'Emergency defensive cooldown' },
+    ],
+    tips: [
+      'Sacred Pulse is your primary AoE heal — stay central so all 5 players are in range.',
+      'Prioritise keeping your tank alive over DPS players.',
+      'Save your Guardian Helmet active for incoming burst phases, not at the start of a fight.',
+      'Communicate with your team — call out when your big cooldowns are available.',
+      'Position behind your frontline, never in front.',
+      'At T7+, Hallowfall passive heals are strong enough to sustain through moderate damage alone.',
+    ]
+  },
+  {
+    id: 'tank-zerg',
+    icon: '🛡️',
+    category: 'Zerg / GvG',
+    name: 'Tank frontline',
+    tags: ['Tank', 'Group', 'Zerg', 'Disruption'],
+    filters: ['group', 'pvp'],
+    difficulty: 3,
+    cost: '~1.5M–3M silver',
+    gear: [
+      { slot: 'Main hand', item: 'Grailseeker', note: 'Or Morning Star for more CC' },
+      { slot: 'Head', item: 'Guardian Helmet', note: 'Essential for the active' },
+      { slot: 'Chest', item: 'Guardian Armor', note: '' },
+      { slot: 'Feet', item: 'Guardian Boots', note: '' },
+      { slot: 'Cape', item: 'Martlock Cape', note: 'Increases armor' },
+      { slot: 'Food', item: 'Beef Stew', note: '' },
+      { slot: 'Potion', item: 'Major Resistance', note: '' },
+    ],
+    tips: [
+      'Your job is to absorb damage and disrupt — not to deal damage.',
+      'Use Displacement to pull priority targets (healers, callers) into your team.',
+      'Activate Guardian Helmet when the enemy zerg clusters — it knocks them back.',
+      'Stay in front of your DPS at all times. Peel for your healers if they get dived.',
+      'Communicate positioning with your callers before every engage.',
+      'Run high IP — tank builds scale strongly with item power.',
+    ]
+  },
+  {
+    id: 'ganker',
+    icon: '⚡',
+    category: 'Open world PvP',
+    name: 'Ganker — burst',
+    tags: ['Solo', 'Ganking', 'Ambush', 'Advanced'],
+    filters: ['solo', 'pvp'],
+    difficulty: 5,
+    cost: '~800k–2M silver',
+    gear: [
+      { slot: 'Main hand', item: 'Bloodletter', note: 'T6+ for meaningful burst' },
+      { slot: 'Head', item: 'Assassin Hood', note: '' },
+      { slot: 'Chest', item: 'Assassin Jacket', note: 'Stealth on active' },
+      { slot: 'Feet', item: 'Assassin Shoes', note: 'Sprint for gap close' },
+      { slot: 'Cape', item: 'Bridgewatch Cape', note: 'Increases attack speed' },
+      { slot: 'Food', item: 'Pork Pie', note: 'Flat damage increase' },
+      { slot: 'Potion', item: 'Major Resistance', note: '' },
+    ],
+    tips: [
+      'Only engage completely isolated targets — never attack groups.',
+      'Stealth → close the gap → full burst combo must land in under 3 seconds.',
+      'Always plan your escape route before you engage. Never commit without one.',
+      'Target solo gatherers or players coming out of dungeons with full bags.',
+      'Black zones only — this build is too risky in yellow zones.',
+      'If they mount up or call for backup, disengage immediately.',
+    ]
+  },
+  {
+    id: 'rat',
+    icon: '🐀',
+    category: 'Open world / Roads',
+    name: 'Rat build — escape artist',
+    tags: ['Solo', 'Escape', 'Farming', 'Budget'],
+    filters: ['solo', 'pve', 'cheap'],
+    difficulty: 2,
+    cost: '~200k–500k silver',
+    gear: [
+      { slot: 'Mount', item: 'Swiftclaw or Moose', note: 'Speed is everything' },
+      { slot: 'Head', item: 'Mercenary Hood', note: 'Or any cheap option' },
+      { slot: 'Chest', item: 'Morgana Robe', note: 'Active gives massive speed burst' },
+      { slot: 'Feet', item: 'Shoes of Tenacity', note: 'Removes slows' },
+      { slot: 'Cape', item: 'Martlock Cape', note: '' },
+      { slot: 'Food', item: 'Pork Omelette', note: '' },
+      { slot: 'Potion', item: 'Invisibility', note: 'Emergency escape' },
+    ],
+    tips: [
+      'Your only goal is to loot chests and escape — never fight.',
+      'Morgana Robe active is your primary escape tool — save it for emergencies.',
+      'Shoes of Tenacity remove slows, which most gankers rely on to catch you.',
+      'Use Invisibility Potion as a last resort when cornered.',
+      'Map out your exit portals before going deep into Roads or black zones.',
+      'Keep bags full and leave early — greed gets you killed.',
+    ]
+  },
+  {
+    id: 'fire-staff-zerg',
+    icon: '🔥',
+    category: 'Zerg / Large scale',
+    name: 'Fire Staff — zerg DPS',
+    tags: ['DPS', 'Zerg', 'AoE', 'Group'],
+    filters: ['group', 'pvp'],
+    difficulty: 2,
+    cost: '~1M–2.5M silver',
+    gear: [
+      { slot: 'Main hand', item: 'Infernal Staff', note: 'Or Great Fire Staff' },
+      { slot: 'Head', item: 'Scholar Cowl', note: '' },
+      { slot: 'Chest', item: 'Mage Robe', note: 'Burst damage active' },
+      { slot: 'Feet', item: 'Cloth Sandals', note: '' },
+      { slot: 'Cape', item: 'Caerleon Cape', note: '' },
+      { slot: 'Food', item: 'Beef Stew', note: '' },
+      { slot: 'Potion', item: 'Major Resistance', note: '' },
+    ],
+    tips: [
+      'Vortex into Meteor Shower is the core combo — land Vortex first to group enemies.',
+      'Stay behind your tanks at all times — you are squishy.',
+      'Follow your caller\'s target calls strictly. Random targets waste your AoE.',
+      'Mage Robe active is your panic button — use it when dived, not offensively.',
+      'Great Fire Staff has longer range — useful for siege battles.',
+    ]
+  },
+  {
+    id: 'nature-staff',
+    icon: '🌿',
+    category: '5v5 / Group PvP',
+    name: 'Nature Staff — off-healer',
+    tags: ['Support', 'Heal', 'Group', 'Versatile'],
+    filters: ['group', 'pvp'],
+    difficulty: 3,
+    cost: '~1M–2M silver',
+    gear: [
+      { slot: 'Main hand', item: 'Druidic Staff', note: 'Or Blight Staff for damage' },
+      { slot: 'Head', item: 'Scholar Cowl', note: '' },
+      { slot: 'Chest', item: 'Cleric Robe', note: '' },
+      { slot: 'Feet', item: 'Cloth Sandals', note: '' },
+      { slot: 'Cape', item: 'Thetford Cape', note: '' },
+      { slot: 'Food', item: 'Roast Pork', note: '' },
+      { slot: 'Potion', item: 'Gigantify', note: '' },
+    ],
+    tips: [
+      'Rejuvenate stacks on allies — apply to all 5 players at the start of each fight.',
+      'Thorns aura punishes enemies for attacking your frontline — keep it up.',
+      'Nature Staff is more forgiving than Hallowfall for new healers.',
+      'Blight Staff variant deals damage while healing — good for offensive 5v5 groups.',
+    ]
+  },
+  {
+    id: 'hce-tank',
+    icon: '🏰',
+    category: 'High-end Content (HCE)',
+    name: 'HCE tank',
+    tags: ['Tank', 'PvE', 'Group', 'Endgame'],
+    filters: ['group', 'pve'],
+    difficulty: 4,
+    cost: '~3M–8M silver',
+    gear: [
+      { slot: 'Main hand', item: 'Oathkeepers', note: 'Core for HCE aggro' },
+      { slot: 'Head', item: 'Guardian Helmet', note: '' },
+      { slot: 'Chest', item: 'Guardian Armor', note: '' },
+      { slot: 'Feet', item: 'Guardian Boots', note: '' },
+      { slot: 'Cape', item: 'Martlock Cape', note: '' },
+      { slot: 'Food', item: 'Beef Stew', note: '' },
+      { slot: 'Potion', item: 'Major Resistance', note: '' },
+    ],
+    tips: [
+      'Pull all mobs into a tight group so your AoE DPS can hit everything at once.',
+      'Use Guardian Helmet active to knock mobs into a corner, then hold them there.',
+      'Call out boss mechanics to your group — communication wins HCEs.',
+      'High item power matters here. T8 gear is strongly recommended.',
+      'Coordinate with your healer on when to use defensive cooldowns.',
+    ]
+  },
+  {
+    id: 'solo-gatherer',
+    icon: '⛏️',
+    category: 'Gathering',
+    name: 'Safe gatherer — yellow/red zone',
+    tags: ['Solo', 'Gathering', 'Budget', 'Beginner'],
+    filters: ['solo', 'pve', 'cheap'],
+    difficulty: 1,
+    cost: '~100k–250k silver',
+    gear: [
+      { slot: 'Tool', item: 'Appropriate gathering tool', note: 'Match to resource type' },
+      { slot: 'Head', item: 'Miner/Lumberjack/etc. Cap', note: 'Gathering spec gear' },
+      { slot: 'Chest', item: 'Gathering Jacket', note: '' },
+      { slot: 'Feet', item: 'Gathering Shoes', note: '' },
+      { slot: 'Mount', item: 'Transport Ox', note: 'Carry more, move slower' },
+      { slot: 'Cape', item: 'Any city cape', note: '' },
+      { slot: 'Potion', item: 'Invisibility', note: 'Run if ganked' },
+    ],
+    tips: [
+      'Always use gathering-specific gear — the bonus yield pays for itself quickly.',
+      'Check the map for red player indicators before entering an area.',
+      'Never fill your bags completely — leave room to run and mount up faster.',
+      'Invisibility Potion is your best defence. Pop it and run the moment you see a red.',
+      'Yellow zones are safe for learning. Move to red zones when comfortable.',
+      'Sell raw resources or refine them — check the crafting calculator to see which pays more.',
+    ]
+  },
+];
+
+let currentFilter = 'all';
+
+function filter(tag, btn) {
+  currentFilter = tag;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBuilds();
+}
+
+function toggleBuild(id) {
+  const card = document.getElementById('card-' + id);
+  const isOpen = card.classList.contains('open');
+  document.querySelectorAll('.build-card').forEach(c => c.classList.remove('open'));
+  if (!isOpen) card.classList.add('open');
+}
+
+function diffBar(value, max) {
+  const pct = Math.round((value / max) * 100);
+  return `<div class="diff-track"><div class="diff-fill" style="width:${pct}%"></div></div>`;
+}
+
+function renderBuilds() {
+  const grid = document.getElementById('buildsGrid');
+  const filtered = currentFilter === 'all'
+    ? BUILDS
+    : BUILDS.filter(b => b.filters.includes(currentFilter));
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">No builds match this filter.</div></div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(b => `
+    <div class="build-card" id="card-${b.id}" onclick="toggleBuild('${b.id}')">
+      <div class="build-card-header">
+        <div class="build-icon">${b.icon}</div>
+        <div class="build-meta">
+          <div class="build-category">${b.category}</div>
+          <div class="build-name">${b.name}</div>
+          <div class="build-tags">
+            ${b.tags.map((t,i) => `<span class="tag${i===0?' highlight':''}">${t}</span>`).join('')}
+          </div>
+        </div>
+        <div class="build-arrow">▼</div>
+      </div>
+      <div class="build-detail">
+        <div class="detail-section">
+          <div class="detail-label">Gear</div>
+          <div class="gear-grid">
+            ${b.gear.map(g => `
+              <div class="gear-row">
+                <span class="gear-slot-label">${g.slot}</span>
+                <span class="gear-item-name">${g.item}</span>
+                ${g.note ? `<span class="gear-note">${g.note}</span>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Difficulty</div>
+          <div class="diff-bar">
+            ${[1,2,3,4,5].map(i => `
+              <div class="diff-item">
+                <div class="diff-track"><div class="diff-fill" style="width:${i <= b.difficulty ? 100 : 0}%"></div></div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-label">Tips</div>
+          <div class="tips-list">
+            ${b.tips.map(t => `<div class="tip"><span class="tip-arrow">→</span><span>${t}</span></div>`).join('')}
+          </div>
+        </div>
+        <div class="cost-estimate">
+          <span class="cost-label">Estimated cost</span>
+          <span class="cost-val">${b.cost}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+renderBuilds();
+</script>
+</body>
+</html>
