@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AlbionEdge — Arbitrage Finder</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f13; color: #e8e6e0; min-height: 100vh; }
+
+  .header { background: #16161f; border-bottom: 1px solid #2a2a3a; padding: 14px 24px; display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 30px; height: 30px; }
+  .logo-text { font-size: 16px; font-weight: 600; color: #c9a84c; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 12px; color: #666; margin-left: 2px; }
+
+  .nav { background: #16161f; border-bottom: 1px solid #2a2a3a; display: flex; overflow-x: auto; padding: 0 16px; gap: 2px; }
+  .nav-tab { padding: 11px 16px; font-size: 13px; color: #888; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: 6px; text-decoration: none; transition: color 0.15s; }
+  .nav-tab:hover { color: #ccc; }
+  .nav-tab.active { color: #c9a84c; border-bottom-color: #c9a84c; }
+  .nav-tab.coming-soon { color: #444; cursor: default; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+  .page-title { font-size: 22px; font-weight: 600; color: #e8e6e0; margin-bottom: 4px; }
+  .page-sub { font-size: 14px; color: #666; margin-bottom: 24px; }
+
+  .controls { background: #16161f; border: 1px solid #2a2a3a; border-radius: 10px; padding: 18px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  .control-group { display: flex; flex-direction: column; gap: 6px; }
+  .control-group label { font-size: 12px; color: #888; font-weight: 500; }
+  .control-group select, .control-group input { background: #0f0f13; border: 1px solid #2a2a3a; border-radius: 6px; color: #e8e6e0; font-size: 13px; padding: 8px 10px; min-width: 130px; }
+  .control-group select:focus, .control-group input:focus { outline: none; border-color: #c9a84c; }
+
+  .btn { padding: 9px 20px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: background 0.15s; }
+  .btn-gold { background: #c9a84c; color: #0f0f13; }
+  .btn-gold:hover { background: #d9b85c; }
+  .btn-gold:disabled { background: #5a4a1a; color: #888; cursor: not-allowed; }
+
+  .status { font-size: 13px; color: #888; padding: 4px 0; align-self: center; }
+  .status.loading { color: #c9a84c; }
+  .status.error { color: #e05a5a; }
+
+  .results { background: #16161f; border: 1px solid #2a2a3a; border-radius: 10px; overflow: hidden; }
+  .results-header { padding: 14px 18px; border-bottom: 1px solid #2a2a3a; font-size: 13px; color: #888; display: flex; justify-content: space-between; align-items: center; }
+  .results-count { font-weight: 500; color: #e8e6e0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; font-weight: 500; color: #555; padding: 10px 16px; border-bottom: 1px solid #1e1e2a; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 11px 16px; border-bottom: 1px solid #1a1a24; color: #ccc; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1a1a24; }
+
+  .profit { color: #4caf84; font-weight: 600; }
+  .loss { color: #e05a5a; }
+  .item-name { color: #e8e6e0; font-weight: 500; }
+
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .badge-green { background: #1a3a2a; color: #4caf84; }
+  .badge-amber { background: #3a2a0a; color: #c9a84c; }
+  .badge-red { background: #3a1a1a; color: #e05a5a; }
+
+  .empty { padding: 48px 20px; text-align: center; color: #555; }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+
+  .note { font-size: 12px; color: #555; margin-top: 12px; line-height: 1.6; }
+  .note a { color: #c9a84c; text-decoration: none; }
+
+  .tier-badge { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 4px; background: #2a2a3a; color: #888; margin-right: 4px; }
+
+  @media (max-width: 600px) {
+    .controls { flex-direction: column; }
+    th:nth-child(4), td:nth-child(4) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg class="logo-icon" viewBox="0 0 30 30" fill="none">
+    <polygon points="15,2 28,9 28,21 15,28 2,21 2,9" stroke="#c9a84c" stroke-width="1.5" fill="none"/>
+    <polygon points="15,7 23,12 23,18 15,23 7,18 7,12" fill="#c9a84c" opacity="0.25"/>
+    <polygon points="15,11 19,13.5 19,16.5 15,19 11,16.5 11,13.5" fill="#c9a84c" opacity="0.7"/>
+  </svg>
+  <span class="logo-text">AlbionEdge</span>
+  <span class="logo-sub">toolkit</span>
+</div>
+
+<nav class="nav">
+  <a class="nav-tab active" href="#">⚖️ Arbitrage</a>
+  <a class="nav-tab coming-soon" href="#" title="Coming soon">🔨 Crafting</a>
+  <a class="nav-tab coming-soon" href="#" title="Coming soon">🛡️ Build cost</a>
+  <a class="nav-tab coming-soon" href="#" title="Coming soon">📈 Flip tracker</a>
+  <a class="nav-tab coming-soon" href="#" title="Coming soon">⚔️ Fame logger</a>
+  <a class="nav-tab coming-soon" href="#" title="Coming soon">🌿 Farm optimizer</a>
+  <a class="nav-tab coming-soon" href="#" title="Coming soon">📖 Builds</a>
+</nav>
+
+<div class="main">
+  <div class="page-title">Cross-city arbitrage finder</div>
+  <div class="page-sub">Find items to buy cheap in one city and sell high in another, after tax. Prices from the Albion Data Project.</div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>Item category</label>
+      <select id="category">
+        <option value="armor">Armor</option>
+        <option value="weapons">Weapons</option>
+        <option value="bags">Bags</option>
+        <option value="capes">Capes</option>
+        <option value="food">Food</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Tier</label>
+      <select id="tier">
+        <option value="T4">T4</option>
+        <option value="T5">T5</option>
+        <option value="T6" selected>T6</option>
+        <option value="T7">T7</option>
+        <option value="T8">T8</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Tax rate</label>
+      <select id="tax">
+        <option value="3">3% (premium)</option>
+        <option value="4.5" selected>4.5% (standard)</option>
+        <option value="8">8% (non-premium)</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Min profit (silver)</label>
+      <input type="number" id="minProfit" value="50000" min="0" step="10000"/>
+    </div>
+    <button class="btn btn-gold" id="searchBtn" onclick="findArbitrage()">Find routes</button>
+    <span class="status" id="status"></span>
+  </div>
+
+  <div class="results">
+    <div class="results-header">
+      <span class="results-count" id="resultsCount">—</span>
+      <span style="font-size:12px;color:#555">Sorted by profit</span>
+    </div>
+    <div id="resultsBody">
+      <div class="empty">
+        <div class="empty-icon">⚖️</div>
+        <div class="empty-text">Set your filters and click "Find routes" to see arbitrage opportunities.</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    Prices sourced from the <a href="https://www.albion-online-data.com/" target="_blank">Albion Online Data Project</a> — a community-run API. 
+    Prices update as players browse the market in-game. Always verify prices in-game before trading. 
+    Profit shown is after tax but before travel time and risk.
+  </p>
+</div>
+
+<script>
+const LOCATIONS = ['Caerleon','Bridgewatch','Lymhurst','Fort Sterling','Martlock','Thetford'];
+const API = 'https://west.albion-online-data.com/api/v2/stats/prices/';
+
+const ITEMS = {
+  armor: [
+    'T4_ARMOR_PLATE_SET1','T5_ARMOR_PLATE_SET1','T6_ARMOR_PLATE_SET1','T7_ARMOR_PLATE_SET1','T8_ARMOR_PLATE_SET1',
+    'T4_ARMOR_LEATHER_SET1','T5_ARMOR_LEATHER_SET1','T6_ARMOR_LEATHER_SET1','T7_ARMOR_LEATHER_SET1','T8_ARMOR_LEATHER_SET1',
+    'T4_ARMOR_CLOTH_SET1','T5_ARMOR_CLOTH_SET1','T6_ARMOR_CLOTH_SET1','T7_ARMOR_CLOTH_SET1','T8_ARMOR_CLOTH_SET1',
+    'T4_SHOES_PLATE_SET1','T5_SHOES_PLATE_SET1','T6_SHOES_PLATE_SET1','T7_SHOES_PLATE_SET1','T8_SHOES_PLATE_SET1',
+    'T4_HEAD_PLATE_SET1','T5_HEAD_PLATE_SET1','T6_HEAD_PLATE_SET1','T7_HEAD_PLATE_SET1','T8_HEAD_PLATE_SET1',
+  ],
+  weapons: [
+    'T4_MAIN_SWORD','T5_MAIN_SWORD','T6_MAIN_SWORD','T7_MAIN_SWORD','T8_MAIN_SWORD',
+    'T4_2H_CROSSBOW','T5_2H_CROSSBOW','T6_2H_CROSSBOW','T7_2H_CROSSBOW','T8_2H_CROSSBOW',
+    'T4_MAIN_DAGGER','T5_MAIN_DAGGER','T6_MAIN_DAGGER','T7_MAIN_DAGGER','T8_MAIN_DAGGER',
+    'T4_MAIN_SPEAR','T5_MAIN_SPEAR','T6_MAIN_SPEAR','T7_MAIN_SPEAR','T8_MAIN_SPEAR',
+    'T4_STAFF_FIRE','T5_STAFF_FIRE','T6_STAFF_FIRE','T7_STAFF_FIRE','T8_STAFF_FIRE',
+  ],
+  bags: [
+    'T4_BAG','T5_BAG','T6_BAG','T7_BAG','T8_BAG',
+    'T4_BAG_INSIGHT','T5_BAG_INSIGHT','T6_BAG_INSIGHT','T7_BAG_INSIGHT','T8_BAG_INSIGHT',
+  ],
+  capes: [
+    'T4_CAPE','T5_CAPE','T6_CAPE','T7_CAPE','T8_CAPE',
+    'T5_CAPEITEM_FW_CAERLEON','T5_CAPEITEM_FW_THETFORD','T5_CAPEITEM_FW_LYMHURST',
+    'T6_CAPEITEM_FW_CAERLEON','T6_CAPEITEM_FW_THETFORD','T6_CAPEITEM_FW_LYMHURST',
+  ],
+  food: [
+    'T4_MEAL_STEW','T5_MEAL_STEW','T6_MEAL_STEW','T7_MEAL_STEW','T8_MEAL_STEW',
+    'T4_MEAL_SOUP','T5_MEAL_SOUP','T6_MEAL_SOUP','T7_MEAL_SOUP','T8_MEAL_SOUP',
+    'T4_POTION_HEALTH','T5_POTION_HEALTH','T6_POTION_HEALTH','T7_POTION_HEALTH','T8_POTION_HEALTH',
+  ]
+};
+
+function friendlyName(id) {
+  const map = {
+    'ARMOR_PLATE_SET1':'Plate Armor','ARMOR_LEATHER_SET1':'Leather Jacket','ARMOR_CLOTH_SET1':'Cloth Robe',
+    'SHOES_PLATE_SET1':'Plate Boots','HEAD_PLATE_SET1':'Plate Helmet',
+    'MAIN_SWORD':'Sword','2H_CROSSBOW':'Crossbow','MAIN_DAGGER':'Dagger',
+    'MAIN_SPEAR':'Spear','STAFF_FIRE':'Fire Staff',
+    'BAG':'Bag','BAG_INSIGHT':'Insight Bag',
+    'CAPE':'Cape','CAPEITEM_FW_CAERLEON':'Caerleon Cape','CAPEITEM_FW_THETFORD':'Thetford Cape','CAPEITEM_FW_LYMHURST':'Lymhurst Cape',
+    'MEAL_STEW':'Beef Stew','MEAL_SOUP':'Soup','POTION_HEALTH':'Health Potion',
+  };
+  const parts = id.split('_');
+  const tier = parts[0];
+  const rest = parts.slice(1).join('_');
+  return (tier + ' ' + (map[rest] || rest.replace(/_/g,' '))).trim();
+}
+
+function riskLabel(roi) {
+  if (roi >= 20) return '<span class="badge badge-green">Low risk</span>';
+  if (roi >= 10) return '<span class="badge badge-amber">Medium</span>';
+  return '<span class="badge badge-red">High risk</span>';
+}
+
+async function findArbitrage() {
+  const category = document.getElementById('category').value;
+  const tier = document.getElementById('tier').value;
+  const tax = parseFloat(document.getElementById('tax').value) / 100;
+  const minProfit = parseInt(document.getElementById('minProfit').value) || 0;
+
+  const btn = document.getElementById('searchBtn');
+  const status = document.getElementById('status');
+  const body = document.getElementById('resultsBody');
+  const count = document.getElementById('resultsCount');
+
+  btn.disabled = true;
+  status.className = 'status loading';
+  status.textContent = 'Fetching live prices…';
+  body.innerHTML = '<div class="empty"><div class="empty-text" style="color:#c9a84c">Loading prices from Albion Data Project…</div></div>';
+
+  const allItems = ITEMS[category] || [];
+  const tierItems = allItems.filter(id => id.startsWith(tier + '_'));
+  if (!tierItems.length) {
+    status.textContent = 'No items found for that tier.';
+    btn.disabled = false;
+    return;
+  }
+
+  const locationStr = LOCATIONS.join(',');
+  const itemStr = tierItems.join(',');
+  const url = `${API}${itemStr}?locations=${locationStr}&qualities=1`;
+
+  let data;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('API error ' + res.status);
+    data = await res.json();
+  } catch(e) {
+    status.className = 'status error';
+    status.textContent = 'Could not fetch prices. Try again.';
+    btn.disabled = false;
+    body.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">Failed to load prices from the Albion Data Project. Check your connection and try again.</div></div>';
+    return;
+  }
+
+  // Group by item
+  const byItem = {};
+  for (const row of data) {
+    if (!row.item_id) continue;
+    if (!byItem[row.item_id]) byItem[row.item_id] = {};
+    if (row.sell_price_min > 0) {
+      if (!byItem[row.item_id][row.city] || row.sell_price_min < byItem[row.item_id][row.city]) {
+        byItem[row.item_id][row.city] = row.sell_price_min;
+      }
+    }
+  }
+
+  // Find arbitrage routes
+  const routes = [];
+  for (const [itemId, cityPrices] of Object.entries(byItem)) {
+    const cities = Object.keys(cityPrices);
+    for (let i = 0; i < cities.length; i++) {
+      for (let j = 0; j < cities.length; j++) {
+        if (i === j) continue;
+        const buyCity = cities[i];
+        const sellCity = cities[j];
+        const buyPrice = cityPrices[buyCity];
+        const sellPrice = cityPrices[sellCity];
+        if (!buyPrice || !sellPrice) continue;
+        const profit = Math.round(sellPrice * (1 - tax) - buyPrice);
+        const roi = ((profit / buyPrice) * 100);
+        if (profit >= minProfit) {
+          routes.push({ itemId, buyCity, sellCity, buyPrice, sellPrice, profit, roi });
+        }
+      }
+    }
+  }
+
+  routes.sort((a, b) => b.profit - a.profit);
+
+  btn.disabled = false;
+  status.className = 'status';
+  status.textContent = '';
+
+  if (!routes.length) {
+    count.textContent = 'No routes found';
+    body.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">No profitable routes found with these filters. Try lowering the minimum profit or switching tier.</div></div>';
+    return;
+  }
+
+  count.textContent = routes.length + ' route' + (routes.length !== 1 ? 's' : '') + ' found';
+
+  const rows = routes.slice(0, 50).map(r => `
+    <tr>
+      <td class="item-name">${friendlyName(r.itemId)}</td>
+      <td>${r.buyCity}</td>
+      <td>${r.sellCity}</td>
+      <td>${r.buyPrice.toLocaleString()}</td>
+      <td>${Math.round(r.sellPrice * (1 - parseFloat(document.getElementById('tax').value)/100)).toLocaleString()}</td>
+      <td class="profit">+${r.profit.toLocaleString()}</td>
+      <td>${r.roi.toFixed(1)}%</td>
+      <td>${riskLabel(r.roi)}</td>
+    </tr>
+  `).join('');
+
+  body.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th><th>Buy in</th><th>Sell in</th><th>Buy price</th><th>After tax</th><th>Profit</th><th>ROI</th><th>Risk</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+</script>
+</body>
+</html>
